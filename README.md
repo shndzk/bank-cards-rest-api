@@ -1,37 +1,54 @@
-Система Управления Банковскими Картами (REST API)
-Бэкенд-система автоматизации банковских операций на базе Spring Boot, Spring Security, JWT и СУБД PostgreSQL. Проект разработан строго в соответствии с техническим заданием.
+# Bank Card Management System (REST API)
 
-🚀 Используемый стек технологий
-Язык и фреймворк: Java 17, Spring Boot 3.x
-Безопасность: Spring Security, JWT (Аутентификация stateless-токенами)
-Архитектурный подход: API First / Contract First (Генерация кода через openapi-generator-maven-plugin)
-База данных и миграции: PostgreSQL, Liquibase (Пакетный батчинг вставок активирован)
-Тестирование: JUnit 5, Mockito (Unit-тесты), MockMvc (Интеграционные тесты контроллеров)
-Контейнеризация: Docker Compose для dev-среды
-🔒 Реализованные механизмы безопасности (PCI DSS)
-Шифрование данных: Номера банковских карт шифруются перед записью в БД силами AttributeConverter по алгоритму AES/CBC/PKCS5Padding со случайным вектором инициализации (IV). В СУБД отсутствуют приватные данные в открытом виде.
-Маскирование данных: При сериализации объектов в JSON номера карт маскируются шаблоном **** **** **** 1234 через Jackson MixIn без затирания исходных данных внутри памяти бизнес-логики.
-Разграничение прав (RBAC): Эшелонированная оборона на уровне правил цепочки фильтров URL и аннотаций @PreAuthorize для ролей ADMIN и USER. Заблокированные пользователи автоматически теряют доступ к системе.
-🛠️ Инструкция по локальному запуску приложения
-1. Запуск базы данных в Docker
-Убедитесь, что на компьютере запущен Docker Desktop. Из корневой директории проекта выполните команду для поднятия изолированной СУБД:
+A production-ready, highly secure backend system for managing bank cards, processing internal transfers, and handling user authentication. Built using Spring Boot, Spring Security with stateless JWT tokens, and PostgreSQL.
 
+## 🛠️ Tech Stack & Architecture
+* **Java Version:** 17
+* **Framework:** Spring Boot 3.x
+* **Security:** Spring Security (Stateless JWT Authentication & RBAC)
+* **API Approach:** API First / Contract First (Automated DTO and Controller generation via `openapi-generator-maven-plugin`)
+* **Database & Migrations:** PostgreSQL, Liquibase
+* **Testing:** JUnit 5, Mockito (Unit testing), MockMvc (Integration controller testing)
+* **Containerization:** Docker Compose (Infrastructure provisioning)
+
+---
+
+## 🔒 Implemented Security Features (PCI DSS Compliance)
+1. **Data Encryption at Rest:** Real card numbers are automatically encrypted before writing to the database using an `AttributeConverter` utilizing `AES/CBC/PKCS5Padding` with a unique cryptographically strong initialization vector (IV) per record.
+2. **Data Masking:** Sensitive card numbers are automatically masked (`**** **** **** 1234`) upon JSON serialization using Jackson MixIn. This completely decouples serialization rules from automatically generated openapi source models.
+3. **Role-Based Access Control (RBAC):** Layered security defense featuring synchronized URL filters in `SecurityConfig` and method-level `@PreAuthorize` annotations (`ROLE_ADMIN` and `ROLE_USER`). Blocked users are automatically rejected upon authentication.
+4. **Performance Tuning:** High-performance JDBC batching for `INSERT` and `UPDATE` operations configured directly inside `application.yml` along with `@EntityGraph` fetch strategies to eliminate N+1 query bottlenecks.
+
+---
+
+## 🚀 Getting Started & Local Setup
+
+### 1. Provision the Database (Docker)
+Ensure Docker Desktop is up and running. Navigate to the project root and start the PostgreSQL container:
+```bash
 docker-compose up -d
-2. Запуск Spring Boot приложения
-Запустите компиляцию, применение миграций Liquibase и старт сервера на порту 8080 одной командой:
+```
 
+### 2. Build and Run the Application Locally
+Compile the OpenAPI specifications, apply database schemas through Liquibase, and run the Spring Boot server on port `8080`:
+```bash
 mvn clean spring-boot:run
-3. Тестирование и проверка покрытия кодом
-Для запуска полного пакета из 10 автоматических юнит- и интеграционных тестов выполните:
+```
 
-mvn test
-📝 Демонстрационные учетные записи
-При первом запуске Liquibase автоматически наполняет базу данных тестовыми аккаунтами (пароли захэшированы через BCrypt расширением pgcrypto):
+### 3. Run Automated Tests
+Execute the entire comprehensive test suite consisting of 10 unit and integration tests (Services + Controllers):
+```bash
+mvn clean test
+```
 
-Администратор системы: Логин: admin | Пароль: admin (Роль: ROLE_ADMIN)
-Обычный клиент: Логин: user | Пароль: admin (Роль: ROLE_USER)
-🔗 Эндпоинты интерактивной документации
-После старта приложения вся необходимая документация доступна по ссылкам:
+---
 
-Swagger UI (Тестирование ручек): http://localhost:8080/swagger-ui/index.html
-Спецификация OpenAPI (JSON): http://localhost:8080/v3/api-docs
+## 📝 Seed Data & Test Accounts
+Upon startup, the database is automatically seeded via Liquibase with pre-compiled BCrypt passwords:
+1. **System Administrator:** Username: `admin` | Password: `admin` *(Role: `ROLE_ADMIN`)*
+2. **Standard User:** Username: `user` | Password: `admin` *(Role: `ROLE_USER`)*
+
+## 🔗 Interactive API Documentation
+Once the server is initialized, complete documentation and interactive endpoints are available at:
+* **Swagger UI (Interactive Playground):** http://localhost:8080/swagger-ui/index.html
+* **OpenAPI Specification (JSON):** http://localhost:8080/v3/api-docs
